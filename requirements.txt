@@ -2,5 +2,4 @@ pandas
 numpy
 seaborn
 matplotlib
-socket
 struct
