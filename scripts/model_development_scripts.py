@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
@@ -8,15 +9,22 @@ import mlflow
 import mlflow.sklearn
 import logging
 
+# Create log directory if not exists
+log_dir = "../logs"
+os.makedirs(log_dir, exist_ok=True)
+
+# Set up logging to log both to a file and console
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(f"{log_dir}/pipeline.log"),
+        logging.StreamHandler()
+    ]
+)
 
 # Set MLflow tracking URI to the root directory
 mlflow.set_tracking_uri("file:///E:/Kiffya_10_acc/Week%208-9/Fraud-Detection/mlruns")
-
-# Set or create a new experiment
-mlflow.set_experiment("Fraud_Detection_Experiment")
-
-# Logging setup
-logging.basicConfig(level=logging.INFO)
 
 
 class ModelPipeline:
@@ -37,6 +45,17 @@ class ModelPipeline:
         self.X_test = None
         self.y_train = None
         self.y_test = None
+        
+        # Set different experiments based on the dataset
+        if self.dataset_type == 'creditcard':
+            self.experiment_name = 'creditcard_experiment'
+        elif self.dataset_type == 'fraud':
+            self.experiment_name = 'Fraud_Detection_Experiment'
+        else:
+            raise ValueError("Invalid dataset_type! Must be 'creditcard' or 'fraud'")
+
+        # Set the experiment for MLflow
+        mlflow.set_experiment(self.experiment_name)
 
     def load_data(self):
         """Load data based on the dataset type."""
@@ -55,7 +74,7 @@ class ModelPipeline:
         
         logging.info("Data loading complete.")
 
-    def split_data(self, test_size=0.3, random_state=42):
+    def split_data(self, test_size=0.2, random_state=42):
         """Split the loaded data into training and test sets."""
         if self.data is not None:
             X = self.data.drop(columns=[self.target])
@@ -86,6 +105,10 @@ class ModelPipeline:
         """Log the model, performance metrics, and save the model artifact to MLflow."""
         logging.info(f"Logging {model_name} to MLflow...")
         
+        # Save the model locally
+        model_path = f"../saved_models/{self.dataset_type}_{model_name}.pkl"
+        os.makedirs("../saved_models", exist_ok=True)
+        mlflow.sklearn.save_model(model, model_path)
         # Start MLflow run
         with mlflow.start_run():
             # Log model parameters if available
@@ -100,8 +123,9 @@ class ModelPipeline:
                 "accuracy": report['accuracy']
             })
             
-            # Log the model itself
+            # Log the saved model to MLflow
             mlflow.sklearn.log_model(model, f"{self.dataset_type}_{model_name}_model")
+            mlflow.log_artifact(model_path)  # Save the model artifact for future use
             
             logging.info(f"{model_name} has been logged and saved in MLflow.")
 
