@@ -5,6 +5,7 @@ from sklearn.metrics import classification_report
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from imblearn.over_sampling import SMOTE
 import mlflow
 import mlflow.sklearn
 import logging
@@ -85,7 +86,17 @@ class ModelPipeline:
             logging.info("Data has been split into train and test sets.")
         else:
             raise ValueError("Data not loaded. Please load the data first.")
-
+        
+    def apply_smote(self):
+        """Apply SMOTE to balance the training data."""
+        if self.X_train is not None and self.y_train is not None:
+            logging.info("Applying SMOTE to the training data...")
+            smote = SMOTE(random_state=42)
+            self.X_train, self.y_train = smote.fit_resample(self.X_train, self.y_train)
+            logging.info("SMOTE applied to training data. Classes have been balanced.")
+        else:
+            raise ValueError("Training data is not available. Please split the data first.")
+        
     def train_model(self, model, model_name):
         """Train the model with the training data."""
         logging.info(f"Training {model_name} on {self.dataset_type} dataset...")
@@ -104,11 +115,21 @@ class ModelPipeline:
     def log_model(self, model, model_name, report):
         """Log the model, performance metrics, and save the model artifact to MLflow."""
         logging.info(f"Logging {model_name} to MLflow...")
-        
+
+        # Create the model save path
+        model_dir = "../saved_models"
+        os.makedirs(model_dir, exist_ok=True)
+
+        # Determine the next version number
+        version = 1
+        model_path = os.path.join(model_dir, f"{self.dataset_type}_{model_name}_v{version}.pkl")
+        while os.path.exists(model_path):
+            version += 1
+            model_path = os.path.join(model_dir, f"{self.dataset_type}_{model_name}_v{version}.pkl")
+
         # Save the model locally
-        model_path = f"../saved_models/{self.dataset_type}_{model_name}.pkl"
-        os.makedirs("../saved_models", exist_ok=True)
         mlflow.sklearn.save_model(model, model_path)
+        
         # Start MLflow run
         with mlflow.start_run():
             # Log model parameters if available
@@ -127,7 +148,7 @@ class ModelPipeline:
             mlflow.sklearn.log_model(model, f"{self.dataset_type}_{model_name}_model")
             mlflow.log_artifact(model_path)  # Save the model artifact for future use
             
-            logging.info(f"{model_name} has been logged and saved in MLflow.")
+            logging.info(f"{model_name} has been logged and saved in MLflow as version {version}.")
 
     def run_pipeline(self):
         """Run the entire pipeline from loading data to training and logging models."""
@@ -136,7 +157,7 @@ class ModelPipeline:
         
         # Step 2: Split data
         self.split_data()
-
+        self.apply_smote()
         # Step 3: Train and evaluate multiple models
         models = [
             (LogisticRegression(), 'Logistic Regression'),
