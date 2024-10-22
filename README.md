@@ -61,11 +61,11 @@ Install the required Python packages by running:
 >>>
 ## Tasks
 
-- **Task 1**: Task 1 - Data Analysis and Preprocessing
-- **Task 2**: Task 2 - Model Building and Training 
-- **Task 3**: Task 3 - Model Explainability
-- **Task 4**: Task 4 - Model Deployment and API Development
-- **Task-5**: Task 5 - Build a Dashboard with Flask and Dash
+- **Task 1**: - Data Analysis and Preprocessing
+- **Task 2**: - Model Building and Training 
+- **Task 3**: - Model Explainability
+- **Task 4**: - Model Deployment and API Development
+- **Task-5**: - Build a Dashboard with Flask and Dash
 
 ## Contributing
  We welcome contributions to improve the project. Please follow the steps below to contribute:
