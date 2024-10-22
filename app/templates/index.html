@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection Prediction</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        async function submitForm(event) {
+            event.preventDefault();
+
+            const payload = {
+                user_id: document.getElementById('user_id').value,
+                signup_time: document.getElementById('signup_time').value,
+                purchase_time: document.getElementById('purchase_time').value,
+                purchase_value: parseFloat(document.getElementById('purchase_value').value),
+                source: document.getElementById('source').value,
+                browser: document.getElementById('browser').value,
+                sex: document.getElementById('sex').value,
+                age: parseInt(document.getElementById('age').value),
+                country: document.getElementById('country').value
+            };
+
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            document.getElementById('result').innerText = response.ok ? `Prediction: ${result.prediction}` : `Error: ${result.error}`;
+            document.getElementById('result').classList.toggle('text-danger', !response.ok);
+            document.getElementById('result').classList.toggle('text-success', response.ok);
+        }
+    </script>
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Fraud Detection Prediction</h1>
+        <form onsubmit="submitForm(event)" class="bg-white p-4 rounded shadow-sm">
+            <div class="form-group">
+                <label for="user_id">User ID:</label>
+                <input type="text" id="user_id" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="signup_time">Signup Time (YYYY-MM-DDTHH:MM:SSZ):</label>
+                <input type="text" id="signup_time" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="purchase_time">Purchase Time (YYYY-MM-DDTHH:MM:SSZ):</label>
+                <input type="text" id="purchase_time" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="purchase_value">Purchase Value:</label>
+                <input type="number" id="purchase_value" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="source">Source:</label>
+                <input type="text" id="source" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="browser">Browser:</label>
+                <input type="text" id="browser" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="sex">Sex:</label>
+                <select id="sex" class="form-control" required>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="age">Age:</label>
+                <input type="number" id="age" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="country">Country:</label>
+                <input type="text" id="country" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Submit</button>
+        </form>
+
+        <h2 id="result" class="text-center mt-3"></h2>
+    </div>
+</body>
+</html>
