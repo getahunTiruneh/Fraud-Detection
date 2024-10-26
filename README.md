@@ -9,15 +9,10 @@ This project develops machine learning models to detect fraud in e-commerce and 
 The repository is organized into the following directories:
 
 - **.github/workflows/**: Configuration files for GitHub Actions to enable continuous integration (CI) and automated testing.
-
 - **notebooks/**: Jupyter notebooks for data exploration, feature engineering, and preliminary modeling.
-
 - **scripts/**: Python scripts for data preprocessing, feature extraction, and fraud detaction model implementation.
-
 - **tests/**: Unit tests to ensure the correctness and robustness of the model and data processing logic.
-
 - **requirements.txt**: Lists dependencies and libraries required for the project setup.
-
 - **README.md**: Main documentation file with an overview of the project, installation instructions, and usage guidelines.
 
 
