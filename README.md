@@ -2,7 +2,12 @@
 This project develops machine learning models to detect fraud in e-commerce and banking transactions for Adey Innovations Inc. It leverages geolocation analysis and transaction patterns to improve accuracy, reduce financial losses, and enable real-time fraud monitoring.
 
 ## Core Objectives
-
+This project will involve:
+- Analyzing and preprocessing transaction data.
+- Creating and engineering features that help identify fraud patterns.
+- Building and training machine learning models to detect fraud.
+- Evaluating model performance and making necessary improvements.
+- Deploying the models for real-time fraud detection and setting up monitoring for continuous improvement.
   
 ## Project structure
 
