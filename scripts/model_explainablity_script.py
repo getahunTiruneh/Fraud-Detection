@@ -50,7 +50,7 @@ class FraudDetectionInterpretability:
         lime_explainer = lime.lime_tabular.LimeTabularExplainer(
             training_data=self.X_train.values, 
             feature_names=self.X_train.columns.tolist(),
-            class_names=['0', '0'],
+            class_names=['0', '1'],
             mode='classification'
         )
         
