@@ -1,51 +1,62 @@
-import pickle
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 import shap
-from lime import lime_tabular
-import numpy as np
+import lime
+import lime.lime_tabular
 import matplotlib.pyplot as plt
 
-class ModelExplainability:
-    def __init__(self, model_path, data_path, target_column):
-        self.model = self.load_model(model_path)
-        self.data = pd.read_csv(data_path)
-        self.X = self.data.drop(target_column, axis=1)
-        self.target_column = target_column
+class FraudDetectionInterpretability:
+    def __init__(self, data_path):
+        self.data_path = data_path
+        self.model = RandomForestClassifier(random_state=42)
+        self.X_train, self.X_test, self.y_train, self.y_test = None, None, None, None
+        self.shap_explainer = None
 
-    def load_model(self, model_path):
-        with open(model_path, 'rb') as file:
-            return pickle.load(file)
+    def load_and_split_data(self, test_size=0.2):
+        """Load the dataset, split into features and target, and divide into training and testing sets."""
+        data = pd.read_csv(self.data_path)
+        X = data.drop(columns=['class'])  # Features
+        y = data['class']  # Target variable
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=test_size, random_state=42)
 
-    def explain_with_shap(self):
-        explainer = shap.Explainer(self.model, self.X)
-        shap_values = explainer(self.X)
+    def train_model(self):
+        """Train the Random Forest model on the training data."""
+        self.model.fit(self.X_train, self.y_train)
+
+    def shap_summary_plot(self):
+        """Generate SHAP summary plot to visualize feature importance."""
+        if not self.shap_explainer:
+            self.shap_explainer = shap.Explainer(self.model,self.X_train)
+        
+        X_test_sample = self.X_test.sample(100, random_state=42)
+        shap_values = self.shap_explainer.shap_values(X_test_sample, check_additivity=False)
+        
+        # Summary plot for global feature importance
+        shap.summary_plot(shap_values[..., 1], X_test_sample)
         return shap_values
 
-    def shap_summary_plot(self, shap_values):
-        shap.summary_plot(shap_values, self.X)
-
-    def shap_force_plot(self, shap_values, index=0):
-        # Ensure shap.initjs() for notebook environments
+    def shap_force_plot(self, shap_values, instance_index=0):
+        """Generate SHAP force plot for a specific instance to explain the individual prediction."""
         shap.initjs()
-        # If using in a non-notebook environment, you might want to adjust this to plt.show() based output.
-        plt.figure()
-        shap.force_plot(shap_values[index].base_values, shap_values[index].values, self.X.iloc[index, :], matplotlib=True)
-        plt.show()
-
-    def shap_dependence_plot(self, shap_values, feature_name):
-        shap.dependence_plot(feature_name, shap_values, self.X)
-
-    def explain_with_lime(self, index=0):
-        explainer = lime_tabular.LimeTabularExplainer(
-            training_data=np.array(self.X),
-            mode='classification',
-            feature_names=self.X.columns,
-            class_names=['0', '1'],  # Update based on your class labels
-            discretize_continuous=True
+        return shap.force_plot(
+            self.shap_explainer.expected_value[1], 
+            shap_values[instance_index, :], 
+            self.X_test_sample.iloc[instance_index]
         )
-        # Ensure to pass the row as a numpy array
-        exp = explainer.explain_instance(self.X.iloc[index].values, self.model.predict_proba, num_features=10)
-        return exp
 
-    def lime_feature_importance_plot(self, exp):
-        exp.show_in_notebook(show_table=True)
+    def lime_explanation(self, instance_index=0):
+        """Generate LIME explanation for a single test instance to interpret individual prediction."""
+        lime_explainer = lime.lime_tabular.LimeTabularExplainer(
+            training_data=self.X_train.values, 
+            feature_names=self.X_train.columns.tolist(),
+            class_names=['0', '0'],
+            mode='classification'
+        )
+        
+        explanation = lime_explainer.explain_instance(
+            data_row=self.X_test.values[instance_index], 
+            predict_fn=self.model.predict_proba
+        )
+        explanation.show_in_notebook(show_table=True)
+        return explanation
